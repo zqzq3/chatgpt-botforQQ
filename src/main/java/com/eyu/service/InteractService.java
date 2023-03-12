@@ -6,7 +6,7 @@ import com.eyu.exception.ChatException;
 /**
  * 交互服务
  *
- * @author ashinnotfound
+ * @author zqzq3
  * @date 2022/12/10
  */
 public interface InteractService {
