@@ -1,0 +1,9 @@
+account:
+  #qq
+  qq: 123456
+  password: xxxx
+
+  #ChatGPT
+  apiKey:
+   - sk-xxxx
+   - sk-xxxx
