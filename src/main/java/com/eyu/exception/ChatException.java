@@ -3,7 +3,7 @@ package com.eyu.exception;
 /**
  * 聊天异常
  *
- * @author ashinnotfound
+ * @author zqzq3
  * @date 2023/02/08
  */
 public class ChatException extends Exception{

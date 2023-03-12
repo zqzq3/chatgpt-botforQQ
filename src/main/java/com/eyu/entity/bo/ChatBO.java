@@ -5,7 +5,7 @@ import lombok.Data;
 /**
  * 聊天BO
  *
- * @author ashinnotfound
+ * @author zqzq3
  * @date 2023/02/01
  */
 @Data
