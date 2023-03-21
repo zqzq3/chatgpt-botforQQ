@@ -49,6 +49,26 @@ public class FixProtocolVersion {
                 f.setAccessible(false);
             }
 
+            Object pad = protocols.get(BotConfiguration.MiraiProtocol.IPAD);
+            Class<?> padClass = mac.getClass();
+            Map<String, Object> padData = new HashMap<String, Object>(){{
+                put("id", 537151363);
+                put("ver", "8.9.33.614");
+                put("sdkVer", "6.0.0.2433");
+                put("buildTime", 1640921786L);
+                put("sign", "AA 39 78 F4 1F D9 6F F9 91 4A 66 9E 18 64 74 C7");
+                put("ssoVersion",12);
+                put("miscBitMap", 150470524);
+                put("subSigMap", 66560);
+                put("mainSigMap", 1970400);
+            }};
+            for (Field f : padClass.getFields()) {
+                f.setAccessible(true);
+                if(padData.containsKey(f.getName())){
+                    f.set(pad, padData.get(f.getName()));
+                }
+                f.setAccessible(false);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
