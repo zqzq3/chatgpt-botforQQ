@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.eyu.entity.bo.ChatBO;
 import com.eyu.exception.ChatException;
-import com.eyu.service.InteractService;;
+import com.eyu.service.InteractService;
 import com.eyu.util.BotUtil;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.ConnectionPool;
@@ -14,6 +14,9 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import retrofit2.HttpException;
 import java.util.List;
@@ -28,7 +31,22 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 public class InteractServiceImpl implements InteractService {
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
+    public void save(String key, String value) {
+        redisTemplate.opsForValue().set(key, value);
+    }
+
+    public String getPrompt(String key) {
+        String result = null;
+        try {
+            result = redisTemplate.opsForValue().get(key);
+        } catch (Exception e){
+            log.error("redis连接异常信息:{}", ExceptionUtils.getStackTrace(e));
+        }
+        return result;
+    }
 
     private OkHttpClient client = new OkHttpClient().newBuilder()
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -54,15 +72,16 @@ public class InteractServiceImpl implements InteractService {
 
     @Override
     public String chat(ChatBO chatBO) throws ChatException {
+        String basicPrompt = getPrompt("prompt");
 
-        String prompt = BotUtil.getPrompt(chatBO.getSessionId(), chatBO.getPrompt());
+        String prompt = BotUtil.getPrompt(chatBO.getSessionId(), chatBO.getPrompt(), basicPrompt);
 
         //向gpt提问
         String answer = null;
         try {
             answer = getAnswer(prompt);
         }catch (HttpException e){
-            log.error("向gpt提问失败，提问内容：{}，原因：{}", chatBO.getPrompt(), e.getMessage(), e);
+            log.error("向gpt提问失败,提问内容：{},原因：{}", chatBO.getPrompt(), e.getMessage(), e);
             if (500 == e.code() || 503 == e.code() || 429 == e.code()){
                 log.info("尝试重新发送");
                 try {

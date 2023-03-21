@@ -29,6 +29,8 @@ public class MessageEventHandler implements ListenerHost {
 
     private static final String RESET_WORD = "重置会话";
 
+    private static final String RESET_ALL_WORD = "RESET ALL";
+
     /**
      * 监听消息并把ChatGPT的回答发送到对应qq/群
      * 注：如果是在群聊则需@
@@ -64,6 +66,12 @@ public class MessageEventHandler implements ListenerHost {
     }
 
     private void response(@NotNull MessageEvent event, ChatBO chatBO, String prompt) {
+        if (RESET_ALL_WORD.equals(prompt)) {
+            //检测到重置会话指令
+            BotUtil.resetAll();
+            event.getSubject().sendMessage("重置一切成功");
+            return;
+        }
         if (RESET_WORD.equals(prompt)) {
             //检测到重置会话指令
             BotUtil.resetPrompt(chatBO.getSessionId());

@@ -11,6 +11,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,15 +45,15 @@ public class AccountConfig {
         model = "gpt-3.5-turbo";
         maxToken = 2048;
         temperature = 0.8;
-        basicPrompt = "请简洁回答,";
-//        openAiServiceList = new ArrayList<>();
-//        for (String apiKey : apiKey){
-//            apiKey = apiKey.trim();
-//            if (!"".equals(apiKey)){
-//                openAiServiceList.add(new OpenAiService(apiKey, Duration.ofSeconds(1000)));
-//                log.info("apiKey为 {} 的账号初始化成功", apiKey);
-//            }
-//        }
+        basicPrompt = "请简洁回答我的问题:";
+        openAiServiceList = new ArrayList<>();
+        for (String apiKey : apiKey){
+            apiKey = apiKey.trim();
+            if (!"".equals(apiKey)){
+                openAiServiceList.add(new OpenAiService(apiKey, Duration.ofSeconds(1000)));
+                log.info("apiKey为 {} 的账号初始化成功", apiKey);
+            }
+        }
         FixProtocolVersion.fix();
         //qq
         //登录

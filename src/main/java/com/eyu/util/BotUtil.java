@@ -8,6 +8,7 @@ import com.eyu.exception.ChatException;
 import com.theokanning.openai.OpenAiService;
 import com.theokanning.openai.completion.CompletionRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.*;
@@ -59,13 +60,16 @@ public class BotUtil {
         return completionRequestBuilder;
     }
 
-    public static String getPrompt(String sessionId, String newPrompt) throws ChatException {
+    public static String getPrompt(String sessionId, String newPrompt, String basicPrompt) throws ChatException {
         if (PROMPT_MAP.containsKey(sessionId)){
             ChatMessage chatMessage = new ChatMessage();
             chatMessage.setContent(newPrompt);
             PROMPT_MAP.get(sessionId).add(chatMessage);
         } else {
-            StringBuilder basicStr = new StringBuilder(accountConfig.getBasicPrompt());
+            if(StringUtils.isEmpty(basicPrompt)){
+                basicPrompt = accountConfig.getBasicPrompt();
+            }
+            StringBuilder basicStr = new StringBuilder(basicPrompt);
             List<ChatMessage> chatMessages = new ArrayList<>();
             ChatMessage chatMessage = new ChatMessage();
             chatMessage.setContent(basicStr.append(newPrompt).toString());
@@ -79,12 +83,12 @@ public class BotUtil {
 
         //一个汉字大概两个token
         //预设回答的文字是提问文字数量的两倍
-        if (accountConfig.getMaxToken() < (length + newPrompt.length() * 2) * 2){
+        if (accountConfig.getMaxToken() < (length + newPrompt.length())){
             if (null == PROMPT_MAP.get(sessionId)){
                 throw new ChatException("问题太长了");
             }
             PROMPT_MAP.remove(sessionId);
-            return getPrompt(sessionId, newPrompt);
+            return getPrompt(sessionId, newPrompt, basicPrompt);
         }
         return prompt;
     }
@@ -107,5 +111,9 @@ public class BotUtil {
 
     public static void resetPrompt(String sessionId){
         PROMPT_MAP.remove(sessionId);
+    }
+
+    public static void resetAll(){
+        PROMPT_MAP.clear();
     }
 }
