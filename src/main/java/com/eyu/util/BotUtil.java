@@ -84,9 +84,9 @@ public class BotUtil {
         //一个汉字大概两个token
         //预设回答的文字是提问文字数量的两倍
         if (accountConfig.getMaxToken() < (length + newPrompt.length())){
-            if (null == PROMPT_MAP.get(sessionId)){
-                throw new ChatException("问题太长了");
-            }
+//            if (null == PROMPT_MAP.get(sessionId)){
+//                throw new ChatException("问题太长了");
+//            }
             PROMPT_MAP.remove(sessionId);
             return getPrompt(sessionId, newPrompt, basicPrompt);
         }
