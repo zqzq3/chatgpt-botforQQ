@@ -69,10 +69,13 @@ public class BotUtil {
             if(StringUtils.isEmpty(basicPrompt)){
                 basicPrompt = accountConfig.getBasicPrompt();
             }
-            StringBuilder basicStr = new StringBuilder(basicPrompt);
             List<ChatMessage> chatMessages = new ArrayList<>();
+            ChatMessage systemMessage = new ChatMessage();
+            systemMessage.setRole(MessageRole.SYSTEM.getName());
+            systemMessage.setContent(basicPrompt);
+            chatMessages.add(systemMessage);
             ChatMessage chatMessage = new ChatMessage();
-            chatMessage.setContent(basicStr.append(newPrompt).toString());
+            chatMessage.setContent(newPrompt);
             chatMessages.add(chatMessage);
             PROMPT_MAP.put(sessionId,chatMessages);
         }
