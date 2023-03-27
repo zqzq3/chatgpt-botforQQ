@@ -69,10 +69,13 @@ public class BotUtil {
             if(StringUtils.isEmpty(basicPrompt)){
                 basicPrompt = accountConfig.getBasicPrompt();
             }
-            StringBuilder basicStr = new StringBuilder(basicPrompt);
             List<ChatMessage> chatMessages = new ArrayList<>();
+            ChatMessage systemMessage = new ChatMessage();
+            systemMessage.setRole(MessageRole.SYSTEM.getName());
+            systemMessage.setContent(basicPrompt);
+            chatMessages.add(systemMessage);
             ChatMessage chatMessage = new ChatMessage();
-            chatMessage.setContent(basicStr.append(newPrompt).toString());
+            chatMessage.setContent(newPrompt);
             chatMessages.add(chatMessage);
             PROMPT_MAP.put(sessionId,chatMessages);
         }
@@ -84,9 +87,9 @@ public class BotUtil {
         //一个汉字大概两个token
         //预设回答的文字是提问文字数量的两倍
         if (accountConfig.getMaxToken() < (length + newPrompt.length())){
-            if (null == PROMPT_MAP.get(sessionId)){
-                throw new ChatException("问题太长了");
-            }
+//            if (null == PROMPT_MAP.get(sessionId)){
+//                throw new ChatException("问题太长了");
+//            }
             PROMPT_MAP.remove(sessionId);
             return getPrompt(sessionId, newPrompt, basicPrompt);
         }
