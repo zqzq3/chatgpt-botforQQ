@@ -9,12 +9,20 @@ import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.ListenerHost;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
+import net.mamoe.mirai.message.data.Image;
 import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.MessageChainBuilder;
 import net.mamoe.mirai.message.data.QuoteReply;
+import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 事件处理
@@ -79,21 +87,56 @@ public class MessageEventHandler implements ListenerHost {
         } else {
             String response;
             try {
+                String basicPrompt = "";
+                if(prompt.contains("图片")) {
+                    BotUtil.resetPrompt(chatBO.getSessionId());
+                    basicPrompt = "请按照以下规则给我发送图片：1.使用markdown格式；2.使用unsplash API；3.使用\" ![imgae]https://source.unsplash.com/featured/?<已翻译的英文内容> \"格式回复；4.不要使用代码块，不要描述其他内容，不要解释；5.根据我输入的内容生成对应格式；";
+                }
                 chatBO.setPrompt(prompt);
-                response = interactService.chat(chatBO);
+                response = interactService.chat(chatBO, basicPrompt);
             }catch (ChatException e){
                 response = e.getMessage();
             }
             try {
-                MessageChain messages = new MessageChainBuilder()
-                        .append(new QuoteReply(event.getMessage()))
-                        .append(response)
-                        .build();
-                event.getSubject().sendMessage(messages);
+                Pattern pattern = Pattern.compile("!\\[.+\\]\\((.+?)\\)");
+                Matcher matcher = pattern.matcher(response);
+                if (matcher.find()) {
+                    String imageUrl = matcher.group(1);
+                    MessageChain messages = new MessageChainBuilder()
+                            .append(new QuoteReply(event.getMessage()))
+                            .append("你要的图片")
+                            .append(Image.fromId(getImageId(imageUrl)))
+                            .build();
+                    event.getSubject().sendMessage(messages);
+                } else {
+                    MessageChain messages = new MessageChainBuilder()
+                            .append(new QuoteReply(event.getMessage()))
+                            .append(response)
+                            .build();
+                    event.getSubject().sendMessage(messages);
+                }
             }catch (MessageTooLargeException e){
                 //信息太大，无法引用，采用直接回复
                 event.getSubject().sendMessage(response);
+            } catch (IOException e) {
+                event.getSubject().sendMessage("图片处理失败");
             }
         }
+    }
+
+    public String getImageId(String urlLink) throws IOException {
+        URL url = new URL(urlLink);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int len;
+        try (InputStream is = url.openStream()) {
+            while ((len = is.read(buffer)) != -1) {
+                baos.write(buffer, 0, len);
+            }
+        }
+        byte[] imageData = baos.toByteArray();
+        ExternalResource resource;
+        resource = ExternalResource.create(imageData);
+        return resource.calculateResourceId();
     }
 }

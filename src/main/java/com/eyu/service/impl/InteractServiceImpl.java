@@ -14,6 +14,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -71,9 +72,18 @@ public class InteractServiceImpl implements InteractService {
     }
 
     @Override
-    public String chat(ChatBO chatBO) throws ChatException {
-        String basicPrompt = getPrompt("prompt");
+    public String chat(ChatBO chatBO,String systemPrompt) throws ChatException {
 
+        String basicPrompt;
+
+        if(StringUtils.isNotBlank(systemPrompt)){
+            basicPrompt = getPrompt("picturePrompt");
+            if(basicPrompt == null){
+                basicPrompt = systemPrompt;
+            }
+        } else {
+            basicPrompt = getPrompt("prompt");
+        }
         String prompt = BotUtil.getPrompt(chatBO.getSessionId(), chatBO.getPrompt(), basicPrompt);
 
         //向gpt提问
@@ -91,7 +101,7 @@ public class InteractServiceImpl implements InteractService {
                     log.error("进程休眠失败，原因：{}", ex.getMessage(), ex);
                     throw new RuntimeException(ex);
                 }
-                return chat(chatBO);
+                return chat(chatBO, systemPrompt);
             }
         } catch (InterruptedException e) {
             ;
