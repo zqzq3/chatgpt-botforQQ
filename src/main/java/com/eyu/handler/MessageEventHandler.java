@@ -4,6 +4,7 @@ import com.eyu.entity.bo.ChatBO;
 import com.eyu.exception.ChatException;
 import com.eyu.service.InteractService;
 import com.eyu.util.BotUtil;
+import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.contact.MessageTooLargeException;
 import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.ListenerHost;
@@ -104,8 +105,8 @@ public class MessageEventHandler implements ListenerHost {
                     String imageUrl = matcher.group(1);
                     MessageChain messages = new MessageChainBuilder()
                             .append(new QuoteReply(event.getMessage()))
-                            .append("你要的图片")
-                            .append(Image.fromId(getImageId(imageUrl)))
+                            .append("你要的图片\n")
+                            .append(Image.fromId(getImageId(event.getSubject(), imageUrl)))
                             .build();
                     event.getSubject().sendMessage(messages);
                 } else {
@@ -124,7 +125,7 @@ public class MessageEventHandler implements ListenerHost {
         }
     }
 
-    public String getImageId(String urlLink) throws IOException {
+    public String getImageId(Contact contact, String urlLink) throws IOException {
         URL url = new URL(urlLink);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
@@ -137,6 +138,9 @@ public class MessageEventHandler implements ListenerHost {
         byte[] imageData = baos.toByteArray();
         ExternalResource resource;
         resource = ExternalResource.create(imageData);
-        return resource.calculateResourceId();
+        contact.uploadImage(resource);
+        String result = resource.calculateResourceId();
+        resource.close();
+        return result;
     }
 }
