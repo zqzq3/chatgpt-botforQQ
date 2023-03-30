@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class RedisRateLimiter {
     private static final String KEY_PREFIX = "rate_limiter:";
-    private static final int DEFAULT_LIMIT = 5; // 每小时访问次数限制的默认值
+    private static final int DEFAULT_LIMIT = 10; // 每小时访问次数限制的默认值
     private static final int DEFAULT_EXPIRE_TIME = 3600; // 一个小时的秒数的默认值
 
     @Autowired
