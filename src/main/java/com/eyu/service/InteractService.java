@@ -17,5 +17,5 @@ public interface InteractService {
      * @return {@link String}
      * @throws ChatException 聊天异常
      */
-    String chat(ChatBO chatBO) throws ChatException;
+    String chat(ChatBO chatBO,String systemPrompt) throws ChatException;
 }

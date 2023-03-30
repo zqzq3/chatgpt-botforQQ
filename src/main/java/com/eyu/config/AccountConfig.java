@@ -33,6 +33,7 @@ public class AccountConfig {
     private MessageEventHandler messageEventHandler;
 
     private List<String> apiKey;
+    private List<String> apiKeyPlus;
     private List<OpenAiService> openAiServiceList;
     private String basicPrompt;
     private Integer maxToken;
@@ -43,9 +44,9 @@ public class AccountConfig {
     public void init() {
         //ChatGPT
         model = "gpt-3.5-turbo";
-        maxToken = 2048;
+        maxToken = 1024;
         temperature = 0.8;
-        basicPrompt = "请简洁回答我的问题:";
+        basicPrompt = "简洁回答";
         openAiServiceList = new ArrayList<>();
         for (String apiKey : apiKey){
             apiKey = apiKey.trim();

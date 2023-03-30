@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.eyu.entity.bo.ChatBO;
 import com.eyu.exception.ChatException;
+import com.eyu.handler.RedisRateLimiter;
 import com.eyu.service.InteractService;
 import com.eyu.util.BotUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -33,6 +35,8 @@ import java.util.concurrent.TimeUnit;
 public class InteractServiceImpl implements InteractService {
     @Autowired
     private StringRedisTemplate redisTemplate;
+    @Autowired
+    RedisRateLimiter rateLimiter;
 
     public void save(String key, String value) {
         redisTemplate.opsForValue().set(key, value);
@@ -48,6 +52,14 @@ public class InteractServiceImpl implements InteractService {
         return result;
     }
 
+    public String getModel(String sessionId) {
+        String model = BotUtil.getModel(sessionId);
+        if (StringUtils.isEmpty(model)) {
+            model = "gpt-3.5-turbo";
+        }
+        return model;
+    }
+
     private OkHttpClient client = new OkHttpClient().newBuilder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -56,9 +68,24 @@ public class InteractServiceImpl implements InteractService {
 
     private List<String> apiKeys = null;
 
+    private List<String> apiKeysPlus = null;
+
     private int counter = 0;
 
-    public String getNextKey() {
+    private int plusCounter = 0;
+
+    public String getNextKey(String model) {
+        if (model.contains("gpt-4")){
+            if(apiKeysPlus == null){
+                apiKeysPlus = BotUtil.getApiKeysPlus();
+            }
+            if(counter >= Integer.MAX_VALUE - 1){
+                plusCounter = 0;
+            }
+            int index = plusCounter % apiKeysPlus.size();
+            plusCounter++;
+            return apiKeysPlus.get(index);
+        }
         if(apiKeys == null){
             apiKeys = BotUtil.getApiKeys();
         }
@@ -71,15 +98,36 @@ public class InteractServiceImpl implements InteractService {
     }
 
     @Override
-    public String chat(ChatBO chatBO) throws ChatException {
-        String basicPrompt = getPrompt("prompt");
+    public String chat(ChatBO chatBO,String systemPrompt) throws ChatException {
+        String model = getModel(chatBO.getSessionId());
+        if(model.contains("gpt-4")){
+            if (!rateLimiter.isAllowed(chatBO.getSessionId())) {
+                // 访问被限制
+                return "你话太密了,请找管理员解除限制";
+            }
+        }
+        String basicPrompt;
 
-        String prompt = BotUtil.getPrompt(chatBO.getSessionId(), chatBO.getPrompt(), basicPrompt);
+        if(StringUtils.isNotBlank(systemPrompt)){
+            basicPrompt = getPrompt("picturePrompt");
+            if(basicPrompt == null){
+                basicPrompt = systemPrompt;
+            }
+        } else {
+            basicPrompt = getPrompt("prompt");
+        }
+        String prompt;
+        if(model.contains("gpt-4")){
+            prompt = BotUtil.getGpt4Prompt(chatBO.getSessionId(), chatBO.getPrompt(), basicPrompt);
+        } else {
+            prompt = BotUtil.getPrompt(chatBO.getSessionId(), chatBO.getPrompt(), basicPrompt);
+        }
+
 
         //向gpt提问
         String answer = null;
         try {
-            answer = getAnswer(prompt);
+            answer = getAnswer(prompt, model);
         }catch (HttpException e){
             log.error("向gpt提问失败,提问内容：{},原因：{}", chatBO.getPrompt(), e.getMessage(), e);
             if (500 == e.code() || 503 == e.code() || 429 == e.code()){
@@ -91,7 +139,7 @@ public class InteractServiceImpl implements InteractService {
                     log.error("进程休眠失败，原因：{}", ex.getMessage(), ex);
                     throw new RuntimeException(ex);
                 }
-                return chat(chatBO);
+                return chat(chatBO, systemPrompt);
             }
         } catch (InterruptedException e) {
             ;
@@ -104,7 +152,7 @@ public class InteractServiceImpl implements InteractService {
         return answer;
     }
 
-    public String getAnswer(String prompt) throws InterruptedException {
+    public String getAnswer(String prompt, String model) throws InterruptedException {
         String content = "";
         if (client == null) {
             client = new OkHttpClient().newBuilder()
@@ -114,7 +162,7 @@ public class InteractServiceImpl implements InteractService {
                     .build();
         }
         MediaType mediaType = MediaType.parse("application/json");
-        RequestBody body = RequestBody.create(mediaType, "{\n  \"model\": \"gpt-3.5-turbo\",\n  \"messages\": "+prompt+"\n}");
+        RequestBody body = RequestBody.create(mediaType, "{\n  \"model\": \"" + model + "\",\n  \"messages\": "+prompt+"\n}");
         int retryCount = 0;
         boolean success = false;
         while (!success && retryCount < 3) { // 最多重试3次
@@ -122,7 +170,7 @@ public class InteractServiceImpl implements InteractService {
                 Request request = new Request.Builder()
                         .url("https://api.openai.com/v1/chat/completions")
                         .method("POST", body)
-                        .addHeader("Authorization", "Bearer "+ getNextKey())
+                        .addHeader("Authorization", "Bearer "+ getNextKey(model))
                         .addHeader("Content-Type", "application/json")
                         .build();
                 Response response = client.newCall(request).execute();

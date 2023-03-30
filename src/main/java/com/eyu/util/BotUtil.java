@@ -28,6 +28,8 @@ public class BotUtil {
     private static AccountConfig accountConfig;
 
     private static final Map<String, List<ChatMessage>> PROMPT_MAP = new HashMap<>();
+
+    private static final Map<String, String> userModelMap = new HashMap<>();
     private static final Map<OpenAiService, Integer> COUNT_FOR_OPEN_AI_SERVICE = new HashMap<>();
     private static CompletionRequest.CompletionRequestBuilder completionRequestBuilder;
 
@@ -41,6 +43,10 @@ public class BotUtil {
 
     public static List<String> getApiKeys(){
         return accountConfig.getApiKey();
+    }
+
+    public static List<String> getApiKeysPlus(){
+        return accountConfig.getApiKeyPlus();
     }
 
     public static OpenAiService getOpenAiService(){
@@ -58,6 +64,29 @@ public class BotUtil {
     }
     public static CompletionRequest.CompletionRequestBuilder getCompletionRequestBuilder(){
         return completionRequestBuilder;
+    }
+
+    public static String getGpt4Prompt(String sessionId, String newPrompt, String basicPrompt) throws ChatException {
+        if(StringUtils.isEmpty(basicPrompt)){
+            basicPrompt = accountConfig.getBasicPrompt();
+        }
+        List<ChatMessage> chatMessages = new ArrayList<>();
+        ChatMessage systemMessage = new ChatMessage();
+        systemMessage.setRole(MessageRole.SYSTEM.getName());
+        systemMessage.setContent(basicPrompt);
+        chatMessages.add(systemMessage);
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setContent(newPrompt);
+        chatMessages.add(chatMessage);
+        PROMPT_MAP.put(sessionId,chatMessages);
+        String prompt = JSON.toJSONString(PROMPT_MAP.get(sessionId));
+
+        //一个汉字大概两个token
+        //预设回答的文字是提问文字数量的两倍
+        if (newPrompt.length()>=100){
+            throw new ChatException("问题太长了");
+        }
+        return prompt;
     }
 
     public static String getPrompt(String sessionId, String newPrompt, String basicPrompt) throws ChatException {
@@ -118,5 +147,13 @@ public class BotUtil {
 
     public static void resetAll(){
         PROMPT_MAP.clear();
+    }
+
+    public static void setModel(String sessionId, String model){
+        userModelMap.put(sessionId, model);
+    }
+
+    public static String getModel(String sessionId){
+        return userModelMap.get(sessionId);
     }
 }
