@@ -66,6 +66,29 @@ public class BotUtil {
         return completionRequestBuilder;
     }
 
+    public static String getGpt4Prompt(String sessionId, String newPrompt, String basicPrompt) throws ChatException {
+        if(StringUtils.isEmpty(basicPrompt)){
+            basicPrompt = accountConfig.getBasicPrompt();
+        }
+        List<ChatMessage> chatMessages = new ArrayList<>();
+        ChatMessage systemMessage = new ChatMessage();
+        systemMessage.setRole(MessageRole.SYSTEM.getName());
+        systemMessage.setContent(basicPrompt);
+        chatMessages.add(systemMessage);
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setContent(newPrompt);
+        chatMessages.add(chatMessage);
+        PROMPT_MAP.put(sessionId,chatMessages);
+        String prompt = JSON.toJSONString(PROMPT_MAP.get(sessionId));
+
+        //一个汉字大概两个token
+        //预设回答的文字是提问文字数量的两倍
+        if (newPrompt.length()>=100){
+            throw new ChatException("问题太长了");
+        }
+        return prompt;
+    }
+
     public static String getPrompt(String sessionId, String newPrompt, String basicPrompt) throws ChatException {
         if (PROMPT_MAP.containsKey(sessionId)){
             ChatMessage chatMessage = new ChatMessage();

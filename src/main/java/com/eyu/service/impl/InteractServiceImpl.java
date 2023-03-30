@@ -116,7 +116,13 @@ public class InteractServiceImpl implements InteractService {
         } else {
             basicPrompt = getPrompt("prompt");
         }
-        String prompt = BotUtil.getPrompt(chatBO.getSessionId(), chatBO.getPrompt(), basicPrompt);
+        String prompt;
+        if(model.contains("gpt-4")){
+            prompt = BotUtil.getGpt4Prompt(chatBO.getSessionId(), chatBO.getPrompt(), basicPrompt);
+        } else {
+            prompt = BotUtil.getPrompt(chatBO.getSessionId(), chatBO.getPrompt(), basicPrompt);
+        }
+
 
         //向gpt提问
         String answer = null;
