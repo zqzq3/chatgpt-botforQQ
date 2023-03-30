@@ -33,6 +33,7 @@ public class AccountConfig {
     private MessageEventHandler messageEventHandler;
 
     private List<String> apiKey;
+    private List<String> apiKeyPlus;
     private List<OpenAiService> openAiServiceList;
     private String basicPrompt;
     private Integer maxToken;

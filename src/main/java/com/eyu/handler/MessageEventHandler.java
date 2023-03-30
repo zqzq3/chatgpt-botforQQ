@@ -40,6 +40,10 @@ public class MessageEventHandler implements ListenerHost {
 
     private static final String RESET_ALL_WORD = "RESET ALL";
 
+    private static final String GPT4_WORD = "高级模式";
+
+    private static final String GPT3_WORD = "普通模式";
+
     /**
      * 监听消息并把ChatGPT的回答发送到对应qq/群
      * 注：如果是在群聊则需@
@@ -75,6 +79,23 @@ public class MessageEventHandler implements ListenerHost {
     }
 
     private void response(@NotNull MessageEvent event, ChatBO chatBO, String prompt) {
+
+        if (GPT4_WORD.equals(prompt)) {
+            //检测到重置会话指令
+            BotUtil.setModel(chatBO.getSessionId(), "gpt-4");
+            BotUtil.resetPrompt(chatBO.getSessionId());
+            event.getSubject().sendMessage("高级模式切换成功");
+            return;
+        }
+
+        if (GPT3_WORD.equals(prompt)) {
+            //检测到重置会话指令
+            BotUtil.setModel(chatBO.getSessionId(), "gpt-3.5-turbo");
+            BotUtil.resetPrompt(chatBO.getSessionId());
+            event.getSubject().sendMessage("普通模式切换成功");
+            return;
+        }
+
         if (RESET_ALL_WORD.equals(prompt)) {
             //检测到重置会话指令
             BotUtil.resetAll();
@@ -84,12 +105,14 @@ public class MessageEventHandler implements ListenerHost {
         if (RESET_WORD.equals(prompt)) {
             //检测到重置会话指令
             BotUtil.resetPrompt(chatBO.getSessionId());
+            BotUtil.setModel(chatBO.getSessionId(), "gpt-3.5-turbo");
             event.getSubject().sendMessage("重置会话成功");
         } else {
             String response;
             try {
                 String basicPrompt = "";
                 if(prompt.contains("图片")) {
+                    BotUtil.setModel(chatBO.getSessionId(), "gpt-3.5-turbo");
                     BotUtil.resetPrompt(chatBO.getSessionId());
                     basicPrompt = "请按照以下规则给我发送图片：1.使用markdown格式；2.使用unsplash API；3.使用\" ![imgae]https://source.unsplash.com/featured/?<已翻译的英文内容> \"格式回复；4.不要使用代码块，不要描述其他内容，不要解释；5.根据我输入的内容生成对应格式；";
                 }

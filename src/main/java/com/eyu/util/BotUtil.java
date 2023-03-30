@@ -28,6 +28,8 @@ public class BotUtil {
     private static AccountConfig accountConfig;
 
     private static final Map<String, List<ChatMessage>> PROMPT_MAP = new HashMap<>();
+
+    private static final Map<String, String> userModelMap = new HashMap<>();
     private static final Map<OpenAiService, Integer> COUNT_FOR_OPEN_AI_SERVICE = new HashMap<>();
     private static CompletionRequest.CompletionRequestBuilder completionRequestBuilder;
 
@@ -41,6 +43,10 @@ public class BotUtil {
 
     public static List<String> getApiKeys(){
         return accountConfig.getApiKey();
+    }
+
+    public static List<String> getApiKeysPlus(){
+        return accountConfig.getApiKeyPlus();
     }
 
     public static OpenAiService getOpenAiService(){
@@ -118,5 +124,13 @@ public class BotUtil {
 
     public static void resetAll(){
         PROMPT_MAP.clear();
+    }
+
+    public static void setModel(String sessionId, String model){
+        userModelMap.put(sessionId, model);
+    }
+
+    public static String getModel(String sessionId){
+        return userModelMap.get(sessionId);
     }
 }

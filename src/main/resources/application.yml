@@ -7,6 +7,10 @@ account:
   apiKey:
    - sk-xxxx
    - sk-xxxx
+  #ChatGPT 4
+  apiKeyPlus:
+    - sk-xxxx
+    - sk-xxxx
 spring:
   redis:
     host: 127.0.0.1
