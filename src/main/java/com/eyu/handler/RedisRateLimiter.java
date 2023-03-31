@@ -38,7 +38,7 @@ public class RedisRateLimiter {
     }
 
     public String getPrompt(String sessionId){
-        String prompt = redisTemplate.opsForValue().get(sessionId);
+        String prompt = redisTemplate.opsForValue().get(PROMPT_KEY_PREFIX + sessionId);
         if (prompt == null || prompt.length()==0){
             prompt = redisTemplate.opsForValue().get("prompt");
         }
