@@ -18,4 +18,8 @@ public interface InteractService {
      * @throws ChatException 聊天异常
      */
     String chat(ChatBO chatBO,String systemPrompt) throws ChatException;
+
+    void setUniquePrompt(String sessionId, String prompt);
+
+    String getUniquePrompt(String sessionId);
 }

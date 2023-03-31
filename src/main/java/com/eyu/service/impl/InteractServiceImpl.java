@@ -53,11 +53,12 @@ public class InteractServiceImpl implements InteractService {
     }
 
     public String getModel(String sessionId) {
-        String model = BotUtil.getModel(sessionId);
-        if (StringUtils.isEmpty(model)) {
-            model = "gpt-3.5-turbo";
-        }
-        return model;
+        return "gpt-3.5-turbo";
+//        String model = BotUtil.getModel(sessionId);
+//        if (StringUtils.isEmpty(model)) {
+//            model = "gpt-3.5-turbo";
+//        }
+//        return model;
     }
 
     private OkHttpClient client = new OkHttpClient().newBuilder()
@@ -100,12 +101,12 @@ public class InteractServiceImpl implements InteractService {
     @Override
     public String chat(ChatBO chatBO,String systemPrompt) throws ChatException {
         String model = getModel(chatBO.getSessionId());
-        if(model.contains("gpt-4")){
-            if (!rateLimiter.isAllowed(chatBO.getSessionId())) {
-                // 访问被限制
-                return "你话太密了,请找管理员解除限制";
-            }
-        }
+//        if(model.contains("gpt-4")){
+//            if (!rateLimiter.isAllowed(chatBO.getSessionId())) {
+//                // 访问被限制
+//                return "你话太密了,请找管理员解除限制";
+//            }
+//        }
         String basicPrompt;
 
         if(StringUtils.isNotBlank(systemPrompt)){
@@ -114,7 +115,10 @@ public class InteractServiceImpl implements InteractService {
                 basicPrompt = systemPrompt;
             }
         } else {
-            basicPrompt = getPrompt("prompt");
+            basicPrompt = rateLimiter.getPrompt(chatBO.getSessionId());
+            if(basicPrompt == null || basicPrompt.length() == 0){
+                basicPrompt = "请简洁回答";
+            }
         }
         String prompt;
         if(model.contains("gpt-4")){
@@ -189,8 +193,19 @@ public class InteractServiceImpl implements InteractService {
                 retryCount++;
             }
         }
-        content = content.trim().replaceAll("\n", "");
+//        content = content.trim().replaceAll("\n", "");
 
         return content;
     }
+
+    @Override
+    public void setUniquePrompt(String sessionId, String prompt){
+        rateLimiter.setPrompt(sessionId, prompt);
+    }
+
+    @Override
+    public String getUniquePrompt(String sessionId){
+        return rateLimiter.getPrompt(sessionId);
+    }
+
 }
