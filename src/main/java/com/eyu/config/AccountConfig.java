@@ -59,7 +59,7 @@ public class AccountConfig {
         //qq
         //登录
         BotConfiguration.MiraiProtocol[] protocolArray = BotConfiguration.MiraiProtocol.values();
-        BotConfiguration.MiraiProtocol protocol = protocolArray[4];
+        BotConfiguration.MiraiProtocol protocol = protocolArray[3];
 //        int loginCounts = 1;
 //        for (BotConfiguration.MiraiProtocol protocol : miraiProtocols) {
 //            try {

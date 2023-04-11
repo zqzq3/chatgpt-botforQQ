@@ -37,9 +37,9 @@ public class FixProtocolVersion {
                 put("buildTime", 1595836208L);
                 put("sign", "AA 39 78 F4 1F D9 6F F9 91 4A 66 9E 18 64 74 C7");
                 put("ssoVersion",12);
-                put("miscBitMap", 150470524);
-                put("subSigMap", 66560);
-                put("mainSigMap", 1970400);
+                put("miscBitMap", 0x08f7_ff7c);
+                put("subSigMap", 0x0001_0400);
+                put("mainSigMap", 0x001e_10e0);
             }};
             for (Field f : macClass.getFields()) {
                 f.setAccessible(true);
@@ -57,10 +57,10 @@ public class FixProtocolVersion {
                 put("sdkVer", "6.0.0.2433");
                 put("buildTime", 1640921786L);
                 put("sign", "AA 39 78 F4 1F D9 6F F9 91 4A 66 9E 18 64 74 C7");
-                put("ssoVersion",12);
-                put("miscBitMap", 150470524);
-                put("subSigMap", 66560);
-                put("mainSigMap", 1970400);
+                put("ssoVersion",19);
+                put("miscBitMap", 0x08f7_ff7c);
+                put("subSigMap", 0x0001_0400);
+                put("mainSigMap", 0x001e_10e0);
             }};
             for (Field f : padClass.getFields()) {
                 f.setAccessible(true);
