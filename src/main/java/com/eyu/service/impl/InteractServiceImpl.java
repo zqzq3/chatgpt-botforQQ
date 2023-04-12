@@ -21,8 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import retrofit2.HttpException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -63,13 +61,10 @@ public class InteractServiceImpl implements InteractService {
 //        return model;
     }
 
-    private final Proxy proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", 7890));
-
     private OkHttpClient client = new OkHttpClient().newBuilder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .connectionPool(new ConnectionPool(8, 30, TimeUnit.SECONDS))
-            .proxy(proxy)
             .build();
 
     private List<String> apiKeys = null;
@@ -168,7 +163,6 @@ public class InteractServiceImpl implements InteractService {
                     .connectTimeout(30, TimeUnit.SECONDS)
                     .readTimeout(30, TimeUnit.SECONDS)
                     .connectionPool(new ConnectionPool(8, 30, TimeUnit.SECONDS))
-                    .proxy(proxy)
                     .build();
         }
         MediaType mediaType = MediaType.parse("application/json");
