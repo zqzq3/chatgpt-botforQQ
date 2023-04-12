@@ -26,6 +26,8 @@ import java.util.List;
 @Component
 @ConfigurationProperties("account")
 public class AccountConfig {
+    @Resource
+    ProxyConfig proxyConfig;
     private Long qq;
     private String password;
     private Bot qqBot;
@@ -42,6 +44,15 @@ public class AccountConfig {
 
     @PostConstruct
     public void init() {
+        //配置代理
+        if (null != proxyConfig.getHost() && !"".equals(proxyConfig.getHost())) {
+            System.setProperty("http.proxyHost", proxyConfig.getHost());
+            System.setProperty("https.proxyHost", proxyConfig.getHost());
+        }
+        if (null != proxyConfig.getPort() && !"".equals(proxyConfig.getPort())) {
+            System.setProperty("http.proxyPort", proxyConfig.getPort());
+            System.setProperty("https.proxyPort", proxyConfig.getPort());
+        }
         //ChatGPT
         model = "gpt-3.5-turbo";
         maxToken = 1024;
