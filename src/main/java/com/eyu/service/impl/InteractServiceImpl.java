@@ -62,9 +62,9 @@ public class InteractServiceImpl implements InteractService {
     }
 
     private OkHttpClient client = new OkHttpClient().newBuilder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .connectionPool(new ConnectionPool(8, 30, TimeUnit.SECONDS))
+            .connectTimeout(120, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .connectionPool(new ConnectionPool(4, 120, TimeUnit.SECONDS))
             .build();
 
     private List<String> apiKeys = null;
@@ -160,9 +160,9 @@ public class InteractServiceImpl implements InteractService {
         String content = "";
         if (client == null) {
             client = new OkHttpClient().newBuilder()
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
-                    .connectionPool(new ConnectionPool(8, 30, TimeUnit.SECONDS))
+                    .connectTimeout(120, TimeUnit.SECONDS)
+                    .readTimeout(120, TimeUnit.SECONDS)
+                    .connectionPool(new ConnectionPool(4, 120, TimeUnit.SECONDS))
                     .build();
         }
         MediaType mediaType = MediaType.parse("application/json");
