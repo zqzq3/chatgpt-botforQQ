@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class RedisRateLimiter {
     private static final String KEY_PREFIX = "rate_limiter:";
+
+    private static final String PROMPT_KEY_PREFIX = "UniquePrompt:";
     private static final int DEFAULT_LIMIT = 10; // 每小时访问次数限制的默认值
     private static final int DEFAULT_EXPIRE_TIME = 3600; // 一个小时的秒数的默认值
 
@@ -29,5 +31,17 @@ public class RedisRateLimiter {
             redisTemplate.expire(redisKey, expireTime, TimeUnit.SECONDS);
         }
         return count <= limit;
+    }
+
+    public void setPrompt(String sessionId, String prompt){
+        redisTemplate.opsForValue().set(PROMPT_KEY_PREFIX + sessionId, prompt);
+    }
+
+    public String getPrompt(String sessionId){
+        String prompt = redisTemplate.opsForValue().get(PROMPT_KEY_PREFIX + sessionId);
+        if (prompt == null || prompt.length()==0){
+            prompt = redisTemplate.opsForValue().get("prompt");
+        }
+        return prompt;
     }
 }

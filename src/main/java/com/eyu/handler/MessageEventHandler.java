@@ -17,13 +17,16 @@ import net.mamoe.mirai.message.data.QuoteReply;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * 事件处理
@@ -43,6 +46,12 @@ public class MessageEventHandler implements ListenerHost {
     private static final String GPT4_WORD = "高级模式";
 
     private static final String GPT3_WORD = "普通模式";
+
+    private static final String HELP_WORD = "#帮助";
+
+    private static final String SET_WORD = "#设置";
+
+    private static final String GET_WORD = "#显示";
 
     /**
      * 监听消息并把ChatGPT的回答发送到对应qq/群
@@ -80,22 +89,76 @@ public class MessageEventHandler implements ListenerHost {
     }
 
     private void response(@NotNull MessageEvent event, ChatBO chatBO, String prompt) {
-
-        if (GPT4_WORD.equals(prompt)) {
-            //检测到重置会话指令
-            BotUtil.setModel(chatBO.getSessionId(), "gpt-4");
-            BotUtil.resetPrompt(chatBO.getSessionId());
-            event.getSubject().sendMessage("高级模式切换成功");
+        if (GET_WORD.startsWith(prompt)) {
+            String uniquePrompt = interactService.getUniquePrompt(chatBO.getSessionId());
+            if (StringUtils.isEmpty(uniquePrompt)) {
+                MessageChain messages = new MessageChainBuilder()
+                        .append(new QuoteReply(event.getMessage()))
+                        .append("你还没有设置,目前使用的是默认配置!对我说 #设置 跟上你的prompt")
+                        .build();
+                event.getSubject().sendMessage(messages);
+                return;
+            }
+            //检测到帮助会话指令
+            MessageChain messages = new MessageChainBuilder()
+                    .append(new QuoteReply(event.getMessage()))
+                    .append(uniquePrompt)
+                    .build();
+            event.getSubject().sendMessage(messages);
             return;
         }
-
-        if (GPT3_WORD.equals(prompt)) {
-            //检测到重置会话指令
-            BotUtil.setModel(chatBO.getSessionId(), "gpt-3.5-turbo");
-            BotUtil.resetPrompt(chatBO.getSessionId());
-            event.getSubject().sendMessage("普通模式切换成功");
+        if (HELP_WORD.equals(prompt)) {
+            //检测到帮助会话指令
+            MessageChain messages = new MessageChainBuilder()
+                    .append(new QuoteReply(event.getMessage()))
+                    .append("对我说 #设置 跟上你的prompt来设置\n设置完成后,之前的对话会被移除哦 \n对我说#显示 获取你现在的prompt")
+                    .build();
+            event.getSubject().sendMessage(messages);
             return;
         }
+        if (prompt.startsWith(SET_WORD)) {
+            prompt = Arrays.stream(prompt.split("\\s+"))
+                    .skip(1) // 跳过第一个单词 "#设置:"
+                    .collect(Collectors.joining(" "));
+            MessageChain messages;
+            if (StringUtils.isEmpty(prompt) || prompt.length() > 1500){
+                messages = new MessageChainBuilder()
+                        .append(new QuoteReply(event.getMessage()))
+                        .append("设的太长了,爬")
+                        .build();
+            } else {
+                interactService.setUniquePrompt(chatBO.getSessionId(), prompt);
+                messages = new MessageChainBuilder()
+                        .append(new QuoteReply(event.getMessage()))
+                        .append("耶!设置成功")
+                        .build();
+                BotUtil.resetPrompt(chatBO.getSessionId());
+            }
+            event.getSubject().sendMessage(messages);
+            return;
+        }
+//        if (GPT4_WORD.equals(prompt)) {
+//            //检测到重置会话指令
+//            BotUtil.setModel(chatBO.getSessionId(), "gpt-4");
+//            BotUtil.resetPrompt(chatBO.getSessionId());
+//            event.getSubject().sendMessage("高级模式切换成功");
+//            return;
+//        }
+//        if (GPT4_WORD.equals(prompt)) {
+//            //检测到重置会话指令
+//            BotUtil.setModel(chatBO.getSessionId(), "gpt-4");
+//            BotUtil.resetPrompt(chatBO.getSessionId());
+//            event.getSubject().sendMessage("高级模式切换成功");
+//            return;
+//        }
+//
+//        if (GPT3_WORD.equals(prompt)) {
+//            //检测到重置会话指令
+//            BotUtil.setModel(chatBO.getSessionId(), "gpt-3.5-turbo");
+//            BotUtil.resetPrompt(chatBO.getSessionId());
+//            event.getSubject().sendMessage("普通模式切换成功");
+//            return;
+//        }
 
         if (RESET_ALL_WORD.equals(prompt)) {
             //检测到重置会话指令
@@ -106,14 +169,14 @@ public class MessageEventHandler implements ListenerHost {
         if (RESET_WORD.equals(prompt)) {
             //检测到重置会话指令
             BotUtil.resetPrompt(chatBO.getSessionId());
-            BotUtil.setModel(chatBO.getSessionId(), "gpt-3.5-turbo");
+//            BotUtil.setModel(chatBO.getSessionId(), "gpt-3.5-turbo");
             event.getSubject().sendMessage("重置会话成功");
         } else {
             String response;
             try {
                 String basicPrompt = "";
                 if(prompt.contains("图片")) {
-                    BotUtil.setModel(chatBO.getSessionId(), "gpt-3.5-turbo");
+//                    BotUtil.setModel(chatBO.getSessionId(), "gpt-3.5-turbo");
                     BotUtil.resetPrompt(chatBO.getSessionId());
                     basicPrompt = "请按照以下规则给我发送图片：1.使用markdown格式；2.使用unsplash API；3.使用\" ![imgae]https://source.unsplash.com/featured/?<已翻译的英文内容> \"格式回复；4.不要使用代码块，不要描述其他内容，不要解释；5.根据我输入的内容生成对应格式；";
                 }

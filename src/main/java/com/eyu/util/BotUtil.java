@@ -148,12 +148,4 @@ public class BotUtil {
     public static void resetAll(){
         PROMPT_MAP.clear();
     }
-
-    public static void setModel(String sessionId, String model){
-        userModelMap.put(sessionId, model);
-    }
-
-    public static String getModel(String sessionId){
-        return userModelMap.get(sessionId);
-    }
 }
