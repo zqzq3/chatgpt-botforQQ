@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
+import net.mamoe.mirai.auth.BotAuthorization;
 import net.mamoe.mirai.utils.BotConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -59,7 +60,7 @@ public class AccountConfig {
         //qq
         //登录
         BotConfiguration.MiraiProtocol[] protocolArray = BotConfiguration.MiraiProtocol.values();
-        BotConfiguration.MiraiProtocol protocol = protocolArray[4];
+        BotConfiguration.MiraiProtocol protocol = protocolArray[2];
 //        int loginCounts = 1;
 //        for (BotConfiguration.MiraiProtocol protocol : miraiProtocols) {
 //            try {
@@ -82,7 +83,9 @@ public class AccountConfig {
         for (int i = 0; i < 3; i++) {
             try {
                 log.warn("正在尝试第 {} 次， 使用 {} 的方式进行登录", loginCounts++, protocol);
-                qqBot = BotFactory.INSTANCE.newBot(qq, password.trim(), new BotConfiguration(){{setProtocol(protocol);}});
+                // 密码登录
+                // qqBot = BotFactory.INSTANCE.newBot(qq, password.trim(), new BotConfiguration(){{setProtocol(protocol);}});
+                qqBot = BotFactory.INSTANCE.newBot(qq, BotAuthorization.byQRCode(), new BotConfiguration(){{setProtocol(protocol);}});
                 qqBot.login();
                 log.info("成功登录账号为 {} 的qq, 登陆方式为 {}",qq, protocol);
                 //订阅监听事件
