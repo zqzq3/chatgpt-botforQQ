@@ -197,6 +197,16 @@ public class MessageEventHandler implements ListenerHost {
                             .build();
                     event.getSubject().sendMessage(messages);
                 } else {
+
+                    if(response.contains("😈: ")){
+                        String delimiter = "😈: ";
+                        int index = response.indexOf(delimiter);
+
+                        if (index != -1) {
+                            response = response.substring(index + delimiter.length());
+                        }
+                    }
+
                     MessageChain messages = new MessageChainBuilder()
                             .append(new QuoteReply(event.getMessage()))
                             .append(response)
