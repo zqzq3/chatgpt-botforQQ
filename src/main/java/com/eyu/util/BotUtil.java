@@ -16,7 +16,7 @@ import java.util.*;
 /**
  * chatbot工具类
  *
- * @author ashinnotfound
+ * @author zqzq3
  * @date 2023/2/1
  */
 @Component
@@ -90,6 +90,12 @@ public class BotUtil {
     }
 
     public static String getPrompt(String sessionId, String newPrompt, String basicPrompt) throws ChatException {
+        // 如果提问者问题的长度超过设置的长度时 回复问题太长了 并重置他的map
+        if (newPrompt.length() > accountConfig.getMaxToken()){
+            PROMPT_MAP.remove(sessionId);
+            throw new ChatException("问题太长了");
+        }
+
         if (PROMPT_MAP.containsKey(sessionId)){
             ChatMessage chatMessage = new ChatMessage();
             chatMessage.setContent(newPrompt);
@@ -113,12 +119,8 @@ public class BotUtil {
                 .mapToInt(item -> item.getContent().length())
                 .sum();
 
-        //一个汉字大概两个token
-        //预设回答的文字是提问文字数量的两倍
+        // 如果提问者一次会话所有问题的总长度超过设置的长度时 重置他的map 并重新生成一次会话
         if (accountConfig.getMaxToken() < (length + newPrompt.length())){
-//            if (null == PROMPT_MAP.get(sessionId)){
-//                throw new ChatException("问题太长了");
-//            }
             PROMPT_MAP.remove(sessionId);
             return getPrompt(sessionId, newPrompt, basicPrompt);
         }
