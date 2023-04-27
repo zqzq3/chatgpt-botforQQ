@@ -15,15 +15,16 @@ import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.MessageChainBuilder;
 import net.mamoe.mirai.message.data.QuoteReply;
 import net.mamoe.mirai.utils.ExternalResource;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -172,7 +173,7 @@ public class MessageEventHandler implements ListenerHost {
 //            BotUtil.setModel(chatBO.getSessionId(), "gpt-3.5-turbo");
             event.getSubject().sendMessage("重置会话成功");
         } else {
-            String response;
+            CompletableFuture<String> future;
             try {
                 String basicPrompt = "";
                 if(prompt.contains("图片")) {
@@ -181,43 +182,64 @@ public class MessageEventHandler implements ListenerHost {
                     basicPrompt = "请按照以下规则给我发送图片：1.使用markdown格式；2.使用unsplash API；3.使用\" ![imgae]https://source.unsplash.com/featured/?<已翻译的英文内容> \"格式回复；4.不要使用代码块，不要描述其他内容，不要解释；5.根据我输入的内容生成对应格式；";
                 }
                 chatBO.setPrompt(prompt);
-                response = interactService.chat(chatBO, basicPrompt);
-            }catch (ChatException e){
-                response = e.getMessage();
-            }
-            try {
-                Pattern pattern = Pattern.compile("!\\[.+\\]\\((.+?)\\)");
-                Matcher matcher = pattern.matcher(response);
-                if (matcher.find()) {
-                    String imageUrl = matcher.group(1);
-                    MessageChain messages = new MessageChainBuilder()
-                            .append(new QuoteReply(event.getMessage()))
-                            .append("你要的图片\n")
-                            .append(Image.fromId(getImageId(event.getSubject(), imageUrl)))
-                            .build();
-                    event.getSubject().sendMessage(messages);
-                } else {
+                future = interactService.chat(chatBO, basicPrompt);
 
-                    if(response.contains("😈: ")){
-                        String delimiter = "😈: ";
-                        int index = response.indexOf(delimiter);
+                // 处理获取到的结果
+                future.thenAccept(response -> {
+                    // 处理获取到的结果
+                    try {
+                        Pattern pattern = Pattern.compile("!\\[.+\\]\\((.+?)\\)");
+                        Matcher matcher = pattern.matcher(response);
+                        if (matcher.find()) {
+                            String imageUrl = matcher.group(1);
+                            MessageChain messages = new MessageChainBuilder()
+                                    .append(new QuoteReply(event.getMessage()))
+                                    .append("你要的图片\n")
+                                    .append(Image.fromId(getImageId(event.getSubject(), imageUrl)))
+                                    .build();
+                            event.getSubject().sendMessage(messages);
+                        } else {
 
-                        if (index != -1) {
-                            response = response.substring(index + delimiter.length());
+                            if(response.contains("😈: ")){
+                                String delimiter = "😈: ";
+                                int index = response.indexOf(delimiter);
+
+                                if (index != -1) {
+                                    response = response.substring(index + delimiter.length());
+                                }
+                            }
+
+                            MessageChain messages = new MessageChainBuilder()
+                                    .append(new QuoteReply(event.getMessage()))
+                                    .append(response)
+                                    .build();
+                            event.getSubject().sendMessage(messages);
                         }
+                    }catch (MessageTooLargeException e){
+                        //信息太大，无法引用，采用直接回复
+                        event.getSubject().sendMessage(response);
+                    } catch (IOException e) {
+                        event.getSubject().sendMessage("图片处理失败");
                     }
+                });
 
+                // 处理异常
+                future.exceptionally(e -> {
+                    // 处理异常
                     MessageChain messages = new MessageChainBuilder()
                             .append(new QuoteReply(event.getMessage()))
-                            .append(response)
+                            .append(e.getMessage())
                             .build();
                     event.getSubject().sendMessage(messages);
-                }
-            }catch (MessageTooLargeException e){
-                //信息太大，无法引用，采用直接回复
-                event.getSubject().sendMessage(response);
-            } catch (IOException e) {
-                event.getSubject().sendMessage("图片处理失败");
+                    return null;
+                });
+
+            }catch (ChatException e){
+                MessageChain messages = new MessageChainBuilder()
+                        .append(new QuoteReply(event.getMessage()))
+                        .append(e.getMessage())
+                        .build();
+                event.getSubject().sendMessage(messages);
             }
         }
     }

@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.eyu.entity.bo.ChatBO;
 import com.eyu.exception.ChatException;
+import com.eyu.handler.ChatCompletionCallback;
 import com.eyu.handler.RedisRateLimiter;
 import com.eyu.service.InteractService;
 import com.eyu.util.BotUtil;
@@ -20,8 +21,8 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import retrofit2.HttpException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -99,7 +100,7 @@ public class InteractServiceImpl implements InteractService {
     }
 
     @Override
-    public String chat(ChatBO chatBO,String systemPrompt) throws ChatException {
+    public CompletableFuture<String> chat(ChatBO chatBO, String systemPrompt) throws ChatException {
         String model = getModel(chatBO.getSessionId());
 //        if(model.contains("gpt-4")){
 //            if (!rateLimiter.isAllowed(chatBO.getSessionId())) {
@@ -129,34 +130,29 @@ public class InteractServiceImpl implements InteractService {
 
 
         //向gpt提问
-        String answer = null;
-        try {
-            answer = getAnswer(prompt, model);
-        }catch (HttpException e){
-            log.error("向gpt提问失败,提问内容：{},原因：{}", chatBO.getPrompt(), e.getMessage(), e);
-            if (500 == e.code() || 503 == e.code() || 429 == e.code()){
-                log.info("尝试重新发送");
-                try {
-                    //可能是同时请求过多，尝试重新发送
-                    Thread.sleep(3000);
-                } catch (InterruptedException ex) {
-                    log.error("进程休眠失败，原因：{}", ex.getMessage(), ex);
-                    throw new RuntimeException(ex);
-                }
-                return chat(chatBO, systemPrompt);
+        CompletableFuture<String> future = new CompletableFuture<>();
+        ChatCompletionCallback callback = new ChatCompletionCallback() {
+            @Override
+            public void onCompletion(String response) {
+                BotUtil.updatePrompt(chatBO.getSessionId(), response);
+                future.complete(response);
             }
+
+            @Override
+            public void onError(ChatException chatException) {
+                BotUtil.resetPrompt(chatBO.getSessionId());
+                future.completeExceptionally(chatException);
+            }
+        };
+        try {
+            getAnswer(prompt, model, callback);
         } catch (InterruptedException e) {
-            ;
+            throw new ChatException("我麻了 稍后再试下吧");
         }
-        if (null == answer || answer.equals("")){
-            BotUtil.resetPrompt(chatBO.getSessionId());
-            throw new ChatException("我无了 稍后再试下吧");
-        }
-        BotUtil.updatePrompt(chatBO.getSessionId(), answer);
-        return answer;
+        return future;
     }
 
-    public String getAnswer(String prompt, String model) throws InterruptedException {
+    public void getAnswer(String prompt, String model, ChatCompletionCallback callback) throws InterruptedException {
         String content = "";
         if (client == null) {
             client = new OkHttpClient().newBuilder()
@@ -185,17 +181,20 @@ public class InteractServiceImpl implements InteractService {
                     JSONArray jsonArray = jsonObject.getJSONArray("choices");
                     JSONObject result = jsonArray.getJSONObject(0);
                     content = result.getJSONObject("message").getString("content");
+                    callback.onCompletion(content);
                 }
                 success = true; // 成功获取到答案，退出重试
             } catch (Exception e) {
                 log.error("向gpt提问失败，提问内容：{}，原因：{}", prompt, e.getMessage(), e);
                 Thread.sleep(3000);
                 retryCount++;
+
             }
         }
-//        content = content.trim().replaceAll("\n", "");
 
-        return content;
+        if (!success || StringUtils.isEmpty(content)){
+            callback.onError(new ChatException("我无了 稍后再试下吧"));
+        }
     }
 
     @Override

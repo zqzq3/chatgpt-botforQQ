@@ -2,6 +2,7 @@ package com.eyu.service;
 
 import com.eyu.entity.bo.ChatBO;
 import com.eyu.exception.ChatException;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 交互服务
@@ -17,7 +18,7 @@ public interface InteractService {
      * @return {@link String}
      * @throws ChatException 聊天异常
      */
-    String chat(ChatBO chatBO,String systemPrompt) throws ChatException;
+    CompletableFuture<String> chat(ChatBO chatBO, String systemPrompt) throws ChatException;
 
     void setUniquePrompt(String sessionId, String prompt);
 
