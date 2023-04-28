@@ -49,7 +49,12 @@ password : xxxx
 
 tips：机器人响应速度与你的网络环境挂钩。
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=zqzq3/chatgpt-botforQQ&type=Date)](https://star-history.com/#zqzq3/chatgpt-botforQQ&Date)
+<p align="center">
+  <a href="https://github.com/zqzq3/chatgpt-botforQQ/stargazers">
+    <img src="https://reporoster.com/stars/dark/zqzq3/chatgpt-botforQQ" alt="Stargazers repo roster for @zqzq3/chatgpt-botforQQ" />
+  </a>
+  <a href="https://github.com/zqzq3/chatgpt-botforQQ/stargazers">
+    <img src="https://api.star-history.com/svg?repos=zqzq3/chatgpt-botforQQ&type=Date" alt="Star history chart for @zqzq3/chatgpt-botforQQ"/>
+  </a>
+</p>
 
