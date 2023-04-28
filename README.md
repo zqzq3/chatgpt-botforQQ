@@ -1,7 +1,5 @@
 # ChatGpt-BotForQQ
 
-<iframe style="width:100%;height:auto;min-width:600px;min-height:400px;" src="https://star-history.com/embed?secret=Z2hwX0tkb3JLbnBSTTNoT1pTblNYN2c0alNnaTVKdDBSVzBhN2piZw==#zqzq3/chatgpt-botforQQ&Date" frameBorder="0"></iframe>
-
 ## 介绍
 
 an **unofficial** implement of ChatGPT in **Tencent QQ**.
@@ -50,3 +48,5 @@ password : xxxx
 3.  然后启动
 
 tips：机器人响应速度与你的网络环境挂钩。
+
+<iframe style="width:100%;height:auto;min-width:600px;min-height:400px;" src="https://star-history.com/embed?secret=Z2hwX0tkb3JLbnBSTTNoT1pTblNYN2c0alNnaTVKdDBSVzBhN2piZw==#zqzq3/chatgpt-botforQQ&Date" frameBorder="0"></iframe>
