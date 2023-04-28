@@ -1,4 +1,4 @@
-# ChatGpt-BotForQQ
+# chatgpt-botforQQ
 
 ## 介绍
 
